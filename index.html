@@ -238,7 +238,7 @@
         .diag-val { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--accent); }
 
         /* ==========================================
-         * TEAM GRID
+         * TEAM GRID (COMPLETELY REDESIGNED & BALANCED)
          * ========================================== */
         .dev-header { flex: 0 0 auto; text-align: center; margin-bottom: 40px; font-size: 3rem; font-weight: 900; letter-spacing: 5px; text-transform: uppercase; color: var(--text-main); text-shadow: 0 5px 20px var(--shadow-color); }
         .dev-header span { color: var(--accent); }
@@ -262,7 +262,7 @@
             box-shadow: 0 20px 40px var(--shadow-color); 
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
-            margin-top: 30px;
+            margin-top: 30px; /* Space for the floating avatar */
             animation: staggerPopIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
         }
         
@@ -279,7 +279,7 @@
             transform: translateY(-12px) scale(1.03);
             background: var(--surface-hover);
             box-shadow: 0 30px 60px rgba(0, 229, 255, 0.2);
-            border-color: transparent; 
+            border-color: transparent; /* Let the ::before glow take over */
         }
         
         .dev-card:hover::before { opacity: 1; }
@@ -289,7 +289,7 @@
             background: linear-gradient(135deg, var(--accent), var(--accent-dark)); 
             box-shadow: 0 10px 30px var(--accent-glow); 
             transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: absolute; top: -55px; 
+            position: absolute; top: -55px; /* Floats above the card */
             z-index: 2;
         }
         
@@ -356,7 +356,7 @@
         .spin { animation: spinSlow 0.5s linear infinite; color: var(--accent); }
 
         /* ==========================================
-         * MOBILE VIEW
+         * MOBILE VIEW (FULLY UNLOCKED & RESPONSIVE)
          * ========================================== */
         @media (max-width: 1100px), (max-height: 800px) {
             body { 
@@ -375,40 +375,82 @@
                 display: flex; flex-direction: column; flex: none; height: auto; min-height: 0; gap: 15px; 
             }
             
+            /* Logic Core explicitly overrides span */
             .dash-grid > .card[style*="grid-column: 1 / 3"] { grid-column: 1 / -1 !important; }
             
-            .logic-core-grid { grid-template-columns: 1fr; gap: 20px; }
-            .logic-core-grid > div { background: var(--overlay-bg); padding: 22px; border-radius: 20px; border: 1px solid var(--overlay-border); }
-            .logic-core-grid .control-group { background: transparent; padding: 0; border: none; gap: 15px; margin-top: 15px; }
-            .logic-core-grid .btn-toggle { padding: 18px; border-radius: 16px; font-size: 1.15rem; border: 1px solid var(--surface-border); background: var(--surface); }
-            .logic-core-grid .btn-toggle.active { border-color: var(--glass-highlight); }
+            /* ---- LOGIC CORE MOBILE REVISION ---- */
+            .logic-core-grid { 
+                grid-template-columns: 1fr; /* Stack vertically */
+                gap: 20px; 
+            }
+            /* Add individual module boxes for better touch targets and visual separation */
+            .logic-core-grid > div {
+                background: var(--overlay-bg);
+                padding: 22px;
+                border-radius: 20px;
+                border: 1px solid var(--overlay-border);
+            }
+            .logic-core-grid .control-group { 
+                background: transparent; 
+                padding: 0; 
+                border: none; 
+                gap: 15px; 
+                margin-top: 15px;
+            }
+            /* Oversize the buttons for mobile thumbs */
+            .logic-core-grid .btn-toggle { 
+                padding: 18px; 
+                border-radius: 16px; 
+                font-size: 1.15rem; 
+                border: 1px solid var(--surface-border); 
+                background: var(--surface); 
+            }
+            .logic-core-grid .btn-toggle.active { 
+                border-color: var(--glass-highlight); 
+            }
+            /* ------------------------------------ */
             
             .card { flex: none; min-height: min-content; overflow: visible !important; padding: 20px 15px; margin: 0; }
             
-            .dev-grid { display: grid; grid-template-columns: 1fr; gap: 60px; padding: 50px 10px 20px; overflow: visible !important; }
+            /* Team Grid single column with heavy top padding for floating avatars */
+            .dev-grid { 
+                display: grid; grid-template-columns: 1fr; gap: 60px; 
+                padding: 50px 10px 20px; overflow: visible !important; 
+            }
             
+            /* Header constraints */
             .header-left { gap: 12px; }
             .logo { font-size: 22px; }
             .subtitle { display: none; }
             
             .tank-wrapper { min-height: 250px; }
             
+            /* Curtain responsive constraints */
             .curtain-title { font-size: 3rem; letter-spacing: 5px; }
             .curtain-glass { padding: 40px 20px; width: 90%; max-width: 400px; }
             
-            .power-controls-card { flex-direction: column !important; text-align: center; justify-content: center; align-items: center; gap: 20px; padding: 25px 15px !important; }
+            /* Fix Power Controls for mobile (horizontal layout to vertical) */
+            .power-controls-card { 
+                flex-direction: column !important; text-align: center; justify-content: center; 
+                align-items: center; gap: 20px; padding: 25px 15px !important; 
+            }
             .power-controls-card > div { width: 100%; justify-content: center; flex-direction: column; }
             .power-controls-card button { width: 100%; }
             
+            /* Fix Live Readings Mobile */
             .live-readings-card { flex-direction: column !important; text-align: center; gap: 20px; }
-            .live-readings-card > div[style*="border-left"] { border-left: none !important; border-top: 2px dashed var(--surface-border); padding-top: 20px; width: 100%; flex-direction: column; gap: 20px; }
+            .live-readings-card > div[style*="border-left"] { 
+                border-left: none !important; border-top: 2px dashed var(--surface-border); 
+                padding-top: 20px; width: 100%; flex-direction: column; gap: 20px; 
+            }
             
+            /* Typography safety constraints */
             .value { font-size: 2.5rem !important; }
         }
     </style>
 </head>
 <body>
-    <div id="app" v-cloak>
+    <div id="app">
         
         <div class="curtain" :class="{'hidden': !showCurtain}" @click="openCurtain">
             <div class="curtain-glass">
@@ -766,7 +808,7 @@
         const { createApp, ref, computed, onMounted, watch } = Vue;
         const FISH_ICONS = { "TROPICAL": "🐠", "BETTA": "🐟", "GOLDFISH": "🐡" };
         
-        // --- Global Firebase Configuration ---
+        // --- Update this URL to match your exact Firebase realtime database ---
         const FIREBASE_URL = "https://fishmate-4d6df-default-rtdb.asia-southeast1.firebasedatabase.app/system_data.json";
         
         createApp({
@@ -814,13 +856,13 @@
                 const addFish = () => {
                     if (!draftName.value) return;
                     
-                    const new_id = sys.value.inhabitants.length ? Math.max(...sys.value.inhabitants.map(f => f.id)) + 1 : 1;
-                    const new_inhabitants = [...sys.value.inhabitants, { id: new_id, name: draftName.value, type: draftType.value }];
+                    const new_id = sys.value.inhabitants && sys.value.inhabitants.length ? Math.max(...sys.value.inhabitants.map(f => f.id)) + 1 : 1;
+                    const new_inhabitants = [...(sys.value.inhabitants || []), { id: new_id, name: draftName.value, type: draftType.value }];
                     
-                    // Optimistic update
+                    // Optimistic update for UI
                     sys.value.inhabitants = new_inhabitants;
-
-                    // Push to Firebase with CORRECT headers
+                    
+                    // Write to Firebase
                     fetch(FIREBASE_URL, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -844,11 +886,8 @@
                 };
                 
                 const deleteFish = (id) => { 
-                    const filtered = sys.value.inhabitants.filter(f => f.id !== id);
-                    
-                    // Optimistic update
+                    const filtered = (sys.value.inhabitants || []).filter(f => f.id !== id);
                     sys.value.inhabitants = filtered;
-
                     fetch(FIREBASE_URL, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -919,24 +958,19 @@
                 
                 const toggleTheme = () => { theme.value = theme.value === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme.value); localStorage.setItem('theme', theme.value); };
                 
-                // --- FIREBASE COMMAND SENDER (FIXED WITH OPTIMISTIC UPDATES & HEADERS) ---
+                // Directly PATCH values to Firebase instead of calling missing local /api/cmd endpoint
                 const sendCmd = (key, val) => { 
                     let payload = {};
-                    // OPTIMISTIC UPDATES: UI changes instantly instead of lagging
-                    if(key === 'mode') { payload["mode"] = val; sys.value.mode = val; } 
-                    if(key === 'mute') { payload["muted"] = (val === 'TRUE'); sys.value.muted = payload["muted"]; } 
-                    if(key === 'pump') { payload["pump_status"] = val; sys.value.pump_status = val; } 
-                    if(key === 'fan') { payload["fan_status"] = val; sys.value.fan_status = val; } 
-
-                    // FIXED FETCH: Requires Content-Type header
+                    if(key === 'mode') { sys.value.mode = val; payload.mode = val; }
+                    if(key === 'mute') { sys.value.muted = (val === 'TRUE'); payload.muted = sys.value.muted; }
+                    if(key === 'pump') { sys.value.pump_status = val; payload.pump_status = val; }
+                    if(key === 'fan') { sys.value.fan_status = val; payload.fan_status = val; }
+                    
                     fetch(FIREBASE_URL, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
-                    }).catch(e => {
-                        addToast("Network Error: Command failed.", "danger");
-                        console.error(e);
-                    });
+                    }).catch(e => console.error("Command Error:", e));
                 };
                 
                 const saveCalibration = () => {
@@ -944,50 +978,50 @@
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ temp_offset: draftTempOffset.value, turb_offset: draftTurbOffset.value })
-                    }).then(() => {
-                        addToast("Hardware offsets saved to Cloud.", "safe");
-                    });
+                    }).then(() => addToast("Hardware offsets saved to Cloud.", "safe"));
                 };
 
                 const saveProfileThresholds = () => {
                     const p = draftProfile.value;
-                    // FIXED URL: Using your correct regional firebase app domain
                     const url = `https://fishmate-4d6df-default-rtdb.asia-southeast1.firebasedatabase.app/system_data/profiles/${editProfileType.value}.json`;
+                    
                     fetch(url, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ temp_min: p.temp_min, temp_max: p.temp_max, turb_warn: p.turb_warn, turb_danger: p.turb_danger })
-                    }).then(() => {
-                        addToast(`Updated ${editProfileType.value} profile globally.`, "safe");
-                    }).catch(e => addToast("Profile save failed.", "danger"));
+                    }).then(() => addToast(`Updated ${editProfileType.value} profile.`, "safe"));
                 };
 
                 const systemCommand = (cmd) => {
                     if(confirm(`WARNING: Initiate ${cmd}?`)) {
-                        addToast(`Firmware ${cmd} command logged...`, "warn");
+                        fetch(FIREBASE_URL, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ sys_command: cmd })
+                        });
+                        addToast(`Firmware ${cmd} initiated...`, "warn");
+                        if (cmd === 'restart') setTimeout(() => location.reload(), 3000);
                     }
                 };
 
-                // --- FIREBASE POLLING ENGINE ---
+                // Poll Firebase instead of missing local /api/data endpoint
                 const pollData = () => { 
-                    fetch(FIREBASE_URL)
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data) {
-                                // Prevent overwriting optimistic user clicks by merging state cautiously
-                                sys.value = { ...sys.value, ...data };
-                                if (!dataLoaded.value && data.temp_offset !== undefined) {
-                                    draftTempOffset.value = data.temp_offset || 0;
-                                    draftTurbOffset.value = data.turb_offset || 0;
-                                    loadDraftProfile();
-                                    dataLoaded.value = true;
-                                }
+                    fetch(FIREBASE_URL).then(res => res.json()).then(data => {
+                        if (data) {
+                            // Merge incoming data so optimistic UI toggles aren't instantly reversed by old packets
+                            sys.value = { ...sys.value, ...data };
+                            
+                            if (!dataLoaded.value && data.temp_offset !== undefined) {
+                                draftTempOffset.value = data.temp_offset || 0;
+                                draftTurbOffset.value = data.turb_offset || 0;
+                                loadDraftProfile();
+                                dataLoaded.value = true;
                             }
-                        })
-                        .catch(e => console.log("Cloud Pull Error:", e)); 
+                        }
+                    }).catch(e => console.log(e)); 
                 };
                 
-                // Pull team JSON locally
+                // Keep team pull local assuming team.json sits next to index.html on Vercel
                 const fetchTeam = () => { fetch('team.json').then(res => res.json()).then(data => teamMembers.value = data).catch(e => {}); };
 
                 onMounted(() => { fetchTeam(); pollData(); setInterval(pollData, 1500); });
