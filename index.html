@@ -810,7 +810,7 @@
         
         // --- DIRECT FIREBASE LINK ---
         const FIREBASE_URL = "https://fishmate-4d6df-default-rtdb.asia-southeast1.firebasedatabase.app/system_data.json";
-        
+
         createApp({
             setup() {
                 const theme = ref(localStorage.getItem('theme') || 'dark');
@@ -838,7 +838,7 @@
                 const editProfileType = ref('TROPICAL');
                 const draftProfile = ref({ temp_min: 22.0, temp_max: 28.0, turb_warn: 1.8, turb_danger: 1.5 });
 
-                let isSendingCmd = false; // Prevents UI lag/jitter
+                let isPendingUpdate = false;
 
                 const getFishIcon = (type) => FISH_ICONS[type] || "🐟";
                 
@@ -958,7 +958,6 @@
                 
                 const toggleTheme = () => { theme.value = theme.value === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme.value); localStorage.setItem('theme', theme.value); };
                 
-                // --- FIXED COMMAND FUNCTION (Direct to Firebase + Anti-Jitter) ---
                 const sendCmd = (key, val) => { 
                     let payload = {};
                     if(key === 'mode') { sys.value.mode = val; payload.mode = val; }
@@ -966,16 +965,16 @@
                     if(key === 'pump') { sys.value.pump_status = val; payload.pump_status = val; }
                     if(key === 'fan') { sys.value.fan_status = val; payload.fan_status = val; }
                     
-                    isSendingCmd = true; // Block UI resets temporarily
+                    isPendingUpdate = true;
                     fetch(FIREBASE_URL, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     }).then(() => {
-                        setTimeout(() => { isSendingCmd = false; }, 2000);
+                        setTimeout(() => { isPendingUpdate = false; }, 2500);
                     }).catch(e => {
                         console.error(e);
-                        isSendingCmd = false;
+                        isPendingUpdate = false;
                     });
                 };
                 
@@ -990,7 +989,6 @@
                 const saveProfileThresholds = () => {
                     const p = draftProfile.value;
                     const url = `https://fishmate-4d6df-default-rtdb.asia-southeast1.firebasedatabase.app/system_data/profiles/${editProfileType.value}.json`;
-                    
                     fetch(url, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -1013,16 +1011,13 @@
                 const pollData = () => { 
                     fetch(FIREBASE_URL).then(res => res.json()).then(data => {
                         if (data) {
-                            if (isSendingCmd) {
-                                // If the user just clicked a button, ignore these keys from the cloud 
-                                // to stop the UI from jumping back and forth briefly.
+                            if (isPendingUpdate) {
                                 delete data.mode;
                                 delete data.pump_status;
                                 delete data.fan_status;
                                 delete data.muted;
                             }
                             sys.value = { ...sys.value, ...data };
-                            
                             if (!dataLoaded.value && data.temp_offset !== undefined) {
                                 draftTempOffset.value = data.temp_offset || 0;
                                 draftTurbOffset.value = data.turb_offset || 0;
@@ -1033,7 +1028,12 @@
                     }).catch(e => console.log(e)); 
                 };
                 
-                const fetchTeam = () => { fetch('team.json').then(res => res.json()).then(data => teamMembers.value = data).catch(e => {}); };
+                const fetchTeam = () => { 
+                    fetch('team.json')
+                        .then(res => res.json())
+                        .then(data => teamMembers.value = data)
+                        .catch(e => console.error("Error loading team.json. Ensure it is uploaded to Vercel.", e)); 
+                };
 
                 onMounted(() => { fetchTeam(); pollData(); setInterval(pollData, 1500); });
                 
