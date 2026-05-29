@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FISHMATE Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐟</text></svg>">
+    
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        [v-cloak] { display: none !important; }
+        
+        /* THEME VARIABLES */
+        :root {
+            --bg: #020d1a; --bg-grad-1: #001220; --bg-grad-2: #012a5e; --bg-grad-3: #001f3f;
+            --surface: rgba(4, 30, 66, 0.45); --surface-hover: rgba(8, 45, 95, 0.65);
+            --surface-border: rgba(0, 191, 255, 0.2); --surface-border-hover: rgba(0, 240, 255, 0.7);
+            --text-main: #e0f7fa; --text-muted: #81d4fa;
+            --accent: #00e5ff; --accent-dark: #0091ea; --accent-glow: rgba(0, 229, 255, 0.8);
+            --danger: #ff1744; --danger-glow: rgba(255, 23, 68, 0.8);
+            --warn: #ffea00; --warn-glow: rgba(255, 234, 0, 0.7);
+            --safe: #00e676; --safe-glow: rgba(0, 230, 118, 0.6);
+            --overlay-bg: rgba(0, 20, 50, 0.5); --overlay-border: rgba(0, 200, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.08); --shadow-color: rgba(0, 0, 0, 0.6);
+            --bubble-core: rgba(255, 255, 255, 0.8); --bubble-edge: rgba(0, 229, 255, 0.6);
+        }
+        [data-theme="light"] {
+            --bg: #e1f5fe; --bg-grad-1: #b3e5fc; --bg-grad-2: #81d4fa; --bg-grad-3: #4fc3f7;
+            --surface: rgba(255, 255, 255, 0.7); --surface-hover: rgba(255, 255, 255, 0.9);
+            --surface-border: rgba(2, 136, 209, 0.3); --surface-border-hover: rgba(2, 136, 209, 0.8);
+            --text-main: #01579b; --text-muted: #0277bd;
+            --accent: #0091ea; --accent-dark: #01579b; --accent-glow: rgba(0, 145, 234, 0.5);
+            --danger: #d50000; --danger-glow: rgba(213, 0, 0, 0.5);
+            --warn: #ffab00; --warn-glow: rgba(255, 171, 0, 0.4);
+            --safe: #00c853; --safe-glow: rgba(0, 200, 83, 0.4);
+            --overlay-bg: rgba(255, 255, 255, 0.6); --overlay-border: rgba(2, 136, 209, 0.15);
+            --glass-highlight: rgba(255, 255, 255, 0.8); --shadow-color: rgba(2, 136, 209, 0.2);
+            --bubble-core: rgba(255,255,255,0.7); --bubble-edge: rgba(0, 145, 234, 0.5);
+        }
+
+        /* * ==========================================
+         * FULLSCREEN LOCK & SCROLL PREVENTION (Desktop)
+         * ========================================== */
+        * { box-sizing: border-box; -ms-overflow-style: none; scrollbar-width: none; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { display: none; }
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3)); 
+            background-size: 400% 400%; 
+            animation: deepOceanFlow 15s ease infinite; 
+            color: var(--text-main); 
+            height: 100vh; width: 100vw;
+            overflow: hidden; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+        }
+
+        /* THE DIVE-IN CURTAIN (MODERNIZED) */
+        .curtain { 
+            position: fixed; inset: 0; z-index: 999999; 
+            background: radial-gradient(circle at center, var(--bg-grad-2), var(--bg-grad-1)); 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            cursor: pointer; transition: transform 0.9s cubic-bezier(0.77, 0, 0.175, 1), opacity 0.8s ease; 
+        }
+        .curtain.hidden { transform: translateY(-100%) scale(1.05); opacity: 0; pointer-events: none; }
+        
+        .curtain-glass {
+            background: rgba(4, 30, 66, 0.6); backdrop-filter: blur(25px);
+            border: 1px solid var(--surface-border); box-shadow: 0 30px 60px rgba(0,0,0,0.7);
+            border-radius: 40px; padding: 60px 80px; text-align: center;
+            position: relative; overflow: hidden; width: 90%; max-width: 600px;
+            animation: floatSubtle 4s ease-in-out infinite alternate;
+        }
+        .curtain-glass::before { 
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(to bottom, transparent, var(--glass-highlight), transparent);
+            transform: rotate(45deg); animation: scanLine 6s linear infinite; opacity: 0.3;
+        }
+
+        .curtain-icon-wrapper { position: relative; margin-bottom: 20px; display: inline-block; }
+        .curtain-ring { 
+            position: absolute; inset: -20px; border-radius: 50%;
+            border: 2px solid var(--accent); opacity: 0;
+            animation: sonarPing 3s infinite ease-out;
+        }
+        .curtain-icon { 
+            font-size: 8rem; position: relative; z-index: 2;
+            filter: drop-shadow(0 0 40px var(--accent-glow)); 
+            animation: swimLogo 4s infinite alternate ease-in-out; 
+        }
+        
+        .curtain-title { 
+            font-size: 4.5rem; font-weight: 900; letter-spacing: 12px; margin-bottom: 10px;
+            background: linear-gradient(to right, #ffffff, var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px var(--shadow-color);
+        }
+        .curtain-subtitle { font-size: 1.2rem; color: var(--text-muted); font-weight: 600; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 40px; }
+        .curtain-prompt { 
+            font-family: 'Space Mono', monospace; font-size: 1.1rem; color: var(--accent); font-weight: bold; letter-spacing: 5px; 
+            animation: pulseOpacity 2s infinite; background: var(--overlay-bg); padding: 18px 40px; border-radius: 40px; border: 1px solid var(--accent); display: inline-block; 
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* MAIN APP WRAPPER */
+        #app { 
+            width: 100%; height: 100vh; padding: 25px 35px;
+            display: flex; flex-direction: column; gap: 20px; 
+            z-index: 10; position: relative; overflow: hidden;
+        }
+
+        /* BACKGROUND BUBBLES */
+        .bubbles { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; overflow: hidden; }
+        .bubble { 
+            position: absolute; bottom: -100px; 
+            background: radial-gradient(circle at 30% 30%, var(--bubble-core), transparent 70%); 
+            border-radius: 50%; border: 1px solid var(--bubble-edge); 
+            animation: floatUp var(--d) cubic-bezier(0.4, 0, 0.2, 1) infinite, wobble var(--w) ease-in-out infinite alternate; 
+            left: var(--x); width: var(--s); height: var(--s); opacity: 0; 
+            box-shadow: 0 0 10px var(--bubble-edge), inset 0 0 5px rgba(255,255,255,0.3); 
+        }
+
+        /* HEADER */
+        header { 
+            flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; 
+            background: var(--surface); padding: 15px 35px; border-radius: 25px; 
+            border: 1px solid var(--surface-border); backdrop-filter: blur(35px); 
+            box-shadow: 0 10px 35px var(--shadow-color), inset 0 1px 3px var(--glass-highlight); 
+        }
+        .header-left { display: flex; align-items: center; gap: 25px; }
+        .logo { font-size: 32px; font-weight: 900; letter-spacing: 6px; color: var(--text-main); display: flex; align-items: center; gap: 15px; text-shadow: 0 4px 15px var(--shadow-color); line-height: 1; }
+        .dynamic-logo-icon { 
+            display: flex; justify-content: center; align-items: center; width: 48px; height: 48px; 
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark)); border-radius: 50%; 
+            box-shadow: 0 0 25px var(--accent-glow), inset 0 0 10px rgba(255,255,255,0.6); 
+            border: 2px solid rgba(255,255,255,0.5); 
+        }
+        .dynamic-logo-icon i { color: #fff; font-size: 2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .subtitle { font-size: 1rem; color: var(--accent); font-weight: 600; letter-spacing: 2px; text-transform: uppercase; opacity: 0.9; border-left: 2px solid var(--surface-border); padding-left: 25px; }
+
+        /* BUTTONS */
+        .btn-icon { 
+            background: var(--overlay-bg); border: 1px solid var(--surface-border); color: var(--text-main); 
+            width: 50px; height: 50px; border-radius: 14px; cursor: pointer; display: grid; place-items: center; font-size: 1.6rem; 
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 5px 15px var(--shadow-color); 
+            flex: 0 0 auto;
+        }
+        .btn-icon:hover { background: var(--accent); color: #fff; box-shadow: 0 10px 25px var(--accent-glow); border-color: #fff; transform: translateY(-3px) scale(1.05); }
+
+        /* DASHBOARD LAYOUT */
+        .content-area { 
+            flex: 1 1 auto; display: flex; flex-direction: column; gap: 20px; 
+            min-height: 0; overflow: hidden; 
+        }
+        
+        .dash-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1.2fr;
+            grid-template-rows: 1.2fr 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .card { 
+            background: var(--surface); backdrop-filter: blur(25px); border: 1px solid var(--surface-border); 
+            border-radius: 28px; padding: 25px 30px; display: flex; flex-direction: column; overflow: hidden; 
+            transition: transform 0.4s ease, border-color 0.4s ease; justify-content: space-between; min-height: 0;
+            box-shadow: 0 10px 30px var(--shadow-color), inset 0 1px 2px var(--glass-highlight);
+            animation: staggerPopIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+        
+        .card.alert-danger { border-color: var(--danger); animation: breatheDanger 1.2s infinite alternate; }
+        .card.alert-warn { border-color: var(--warn); box-shadow: 0 10px 30px rgba(255,204,0,0.2), inset 0 0 20px rgba(255,204,0,0.1); }
+
+        .card-header { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; color: var(--accent); font-size: 1.05rem; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 15px; }
+        .card-header i { font-size: 2rem; color: var(--text-main); transition: transform 0.4s ease; text-shadow: 0 0 15px var(--shadow-color); }
+        .card:hover .card-header i { transform: scale(1.15) rotate(8deg); color: var(--accent); }
+        
+        .value { font-family: 'Space Mono', monospace; font-size: clamp(2.5rem, 4vw, 4rem); font-weight: 700; line-height: 1; text-shadow: 0 5px 15px var(--shadow-color); letter-spacing: -2px; animation: textPulse 4s infinite alternate; }
+        .value span { font-size: 1.2rem; color: var(--text-muted); font-family: 'Outfit', sans-serif; margin-left: 8px; font-weight: 600; letter-spacing: 0; }
+
+        .laser-track { width: 100%; height: 14px; background: var(--overlay-bg); border-radius: 10px; border: 1px solid var(--overlay-border); box-shadow: inset 0 3px 8px var(--shadow-color); overflow: hidden; }
+        .laser-fill { height: 100%; border-radius: 10px; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s ease; background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent); background-size: 1.2rem 1.2rem; animation: laserStripe 1s linear infinite; }
+
+        /* TANK WATER SIMULATION */
+        .tank-wrapper { flex: 1 1 auto; width: 100%; min-height: 100px; background: var(--overlay-bg); border-radius: 20px; border: 2px solid var(--surface-border); position: relative; overflow: hidden; box-shadow: inset 0 8px 30px var(--shadow-color); margin-top: 15px; }
+        .water-wave { position: absolute; bottom: 0; width: 300%; height: 85%; transform-origin: bottom; transition: height 2s ease, background 0.5s ease; border-top-left-radius: 40% 15px; border-top-right-radius: 40% 15px; }
+        .tank-danger .water-wave { height: 20% !important; }
+        .wave-back { left: 0; background: linear-gradient(to top, var(--accent-dark), transparent); opacity: 0.5; animation: waveSlosh 4s infinite linear; }
+        .wave-mid { left: -25%; background: linear-gradient(to top, var(--accent), transparent); opacity: 0.6; animation: waveSlosh 3s infinite linear reverse; }
+        .wave-front { left: -50%; background: linear-gradient(to top, #fff, transparent); opacity: 0.3; animation: waveSlosh 2.5s infinite linear; border-top: 2px solid rgba(255,255,255,0.5); }
+        .tank-fish { position: absolute; font-size: 2.2rem; z-index: 5; filter: drop-shadow(0 0 12px var(--accent-glow)); animation: swimTank var(--dur) ease-in-out infinite alternate; top: var(--top); left: var(--left); }
+
+        /* HEALTH CORE */
+        .health-core { width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(var(--accent) var(--deg), var(--glass-highlight) 0deg); display: flex; justify-content: center; align-items: center; position: relative; margin: auto; box-shadow: 0 0 45px var(--shadow-color); animation: pulseHeart 2s infinite ease-out; }
+        .health-core::before { content: ''; position: absolute; width: 116px; height: 116px; background: var(--surface); border-radius: 50%; border: 4px solid var(--surface-border); backdrop-filter: blur(25px); z-index: 1; }
+        .health-core::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 3px dashed var(--accent); opacity: 0.6; animation: spinSlow 10s linear infinite; }
+        .health-core.core-danger { background: conic-gradient(var(--danger) var(--deg), var(--glass-highlight) 0deg); box-shadow: 0 0 55px var(--danger-glow); animation: pulseHeartFast 0.8s infinite ease-out; }
+        .health-val { position: relative; z-index: 2; font-family: 'Space Mono', monospace; font-size: 2.6rem; font-weight: 800; text-shadow: 0 0 15px var(--shadow-color); }
+
+        /* TICKER / SONAR */
+        .ticker { flex: 0 0 auto; background: var(--surface); border: 1px solid var(--surface-border); padding: 18px 30px; border-radius: 20px; font-family: 'Space Mono', monospace; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 20px; color: var(--accent); backdrop-filter: blur(35px); position: relative; overflow: hidden; box-shadow: 0 12px 35px var(--shadow-color); animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+        .ticker-danger { border-color: var(--danger); color: var(--danger); box-shadow: 0 0 40px var(--danger-glow); }
+        .ticker-warn { border-color: var(--warn); color: var(--warn); box-shadow: 0 0 30px var(--warn-glow); }
+        .sonar-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--glass-highlight); border: 2px solid var(--accent); position: relative; display: flex; justify-content: center; align-items: center; z-index: 2; }
+        .sonar-icon::before { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px solid var(--accent); animation: sonarPing 2s infinite ease-out; }
+        
+        .fish-avatar { font-size: 2rem; filter: drop-shadow(0 0 10px var(--accent-glow)); }
+        .fish-row { display: flex; align-items: center; justify-content: space-between; background: var(--overlay-bg); padding: 12px 18px; border-radius: 16px; border: 1px solid var(--overlay-border); margin-bottom: 10px; }
+
+        /* SLEEK FORMS & BUTTONS */
+        .control-group { display: flex; background: var(--overlay-bg); padding: 8px; border-radius: 16px; border: 1px solid var(--overlay-border); gap: 8px; }
+        .btn-toggle { flex: 1; background: transparent; border: 1px solid transparent; color: var(--text-muted); padding: 14px; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 1rem; text-transform: uppercase; transition: all 0.3s ease; display: flex; justify-content: center; align-items: center; gap: 8px; letter-spacing: 1px; }
+        .btn-toggle.active { background: linear-gradient(135deg, var(--accent-dark), var(--accent)); color: #fff; box-shadow: 0 6px 20px var(--accent-glow); border: 1px solid var(--glass-highlight); transform: scale(1.02); z-index: 2; }
+        .btn-toggle:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        .form-input { width: 100%; padding: 16px 20px; background: var(--overlay-bg); border: 1px solid var(--surface-border); color: var(--text-main); border-radius: 14px; font-family: 'Outfit', sans-serif; font-size: 1.1rem; margin-bottom: 12px; outline: none; transition: border-color 0.3s; }
+        .form-input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
+        .form-select { appearance: none; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300e5ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 18px top 50%; background-size: 16px auto; }
+        .form-input option { background: var(--bg); color: var(--text-main); }
+
+        .logic-core-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; flex: 1; align-content: center; }
+
+        /* CALIBRATION SPECIFIC */
+        .calib-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; flex: 1 1 auto; min-height: 0; }
+        .calib-btn-wrapper { display: flex; justify-content: center; margin-top: auto; padding-top: 15px; }
+        .calib-btn { width: 100%; max-width: 280px; padding: 15px 25px; border-radius: 14px; font-size: 1.1rem; }
+
+        /* DIAGNOSTICS */
+        .diag-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; flex: 1 1 auto; min-height: 0; }
+        .diag-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--surface-border); padding-bottom: 15px; margin-bottom: 15px; }
+        .diag-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .diag-label { font-size: 1.1rem; font-weight: bold; color: var(--text-muted); display: flex; align-items: center; gap: 12px; }
+        .diag-val { font-family: 'Space Mono', monospace; font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+
+        /* ==========================================
+         * TEAM GRID (COMPLETELY REDESIGNED & BALANCED)
+         * ========================================== */
+        .dev-header { flex: 0 0 auto; text-align: center; margin-bottom: 40px; font-size: 3rem; font-weight: 900; letter-spacing: 5px; text-transform: uppercase; color: var(--text-main); text-shadow: 0 5px 20px var(--shadow-color); }
+        .dev-header span { color: var(--accent); }
+        
+        .dev-grid { 
+            flex: 1 1 auto; 
+            min-height: 0; 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 50px 40px; 
+            overflow-y: auto; 
+            padding: 40px 20px 20px;
+            align-content: start;
+        }
+        
+        .dev-card { 
+            background: var(--surface); backdrop-filter: blur(25px);
+            border: 1px solid var(--surface-border);
+            border-radius: 30px; padding: 40px 30px 30px; 
+            display: flex; flex-direction: column; align-items: center; text-align: center; 
+            box-shadow: 0 20px 40px var(--shadow-color); 
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            margin-top: 30px; /* Space for the floating avatar */
+            animation: staggerPopIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+        }
+        
+        .dev-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 100%;
+            border-radius: 30px; padding: 2px;
+            background: linear-gradient(135deg, var(--accent), transparent, var(--accent-dark));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            opacity: 0.3; transition: opacity 0.5s ease; pointer-events: none;
+        }
+
+        .dev-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            background: var(--surface-hover);
+            box-shadow: 0 30px 60px rgba(0, 229, 255, 0.2);
+            border-color: transparent; 
+        }
+        
+        .dev-card:hover::before { opacity: 1; }
+
+        .dev-img-container { 
+            width: 110px; height: 110px; border-radius: 50%; padding: 5px; 
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark)); 
+            box-shadow: 0 10px 30px var(--accent-glow); 
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: absolute; top: -55px; 
+            z-index: 2;
+        }
+        
+        .dev-card:hover .dev-img-container { transform: rotate(15deg) scale(1.1); }
+        .dev-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--bg); background: var(--bg); }
+        
+        .dev-info { margin-top: 40px; display: flex; flex-direction: column; align-items: center; } 
+        
+        .dev-name { font-size: 1.6rem; font-weight: 900; color: var(--text-main); margin-bottom: 12px; letter-spacing: 1px; }
+        
+        .dev-role { 
+            font-size: 0.85rem; font-weight: 800; color: #fff; text-transform: uppercase; 
+            background: linear-gradient(135deg, var(--accent-dark), var(--accent)); 
+            padding: 8px 18px; border-radius: 20px; margin-bottom: 20px; 
+            letter-spacing: 1.5px; box-shadow: 0 5px 15px var(--accent-glow);
+        }
+        
+        .dev-desc { font-size: 1.05rem; color: var(--text-muted); line-height: 1.6; font-weight: 400; }
+
+        /* DRAWER & MODALS */
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(15px); z-index: 1000; display: flex; justify-content: flex-start; }
+        .drawer-panel { width: 360px; background: var(--bg); border-right: 2px solid var(--accent); box-shadow: 20px 0 50px rgba(0,0,0,0.8); padding: 40px 30px; display: flex; flex-direction: column; animation: slideInLeft 0.4s ease forwards; overflow-y: auto; }
+        .drawer-item { display: flex; align-items: center; gap: 16px; width: 100%; padding: 20px; background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-main); font-size: 1.15rem; font-weight: 700; text-transform: uppercase; border-radius: 18px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s ease; }
+        .drawer-item:hover { transform: translateX(8px); border-color: var(--accent); background: rgba(0, 229, 255, 0.1); }
+        .drawer-item.active { background: linear-gradient(135deg, var(--accent-dark), var(--accent)); color: #fff; border-color: var(--glass-highlight); box-shadow: 0 10px 30px var(--accent-glow); transform: translateX(8px); }
+        .drawer-item i { font-size: 2.2rem; color: var(--accent); }
+        .drawer-item.active i { color: #fff; }
+        
+        .toast-container { position: fixed; top: 25px; right: 25px; z-index: 9999; display: flex; flex-direction: column; gap: 15px; pointer-events: none; }
+        .toast { background: var(--surface); backdrop-filter: blur(35px); border: 1px solid var(--surface-border); padding: 18px 25px; border-radius: 25px; font-weight: 700; font-family: 'Space Mono', monospace; display: flex; align-items: center; gap: 15px; font-size: 1.05rem; color: var(--text-main); box-shadow: 0 15px 45px var(--shadow-color); }
+        .toast-safe { border-color: var(--safe); color: var(--safe); }
+        .toast-danger { border-color: var(--danger); color: var(--danger); }
+        
+        .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0, 0.85); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; z-index: 99999; }
+        .modal-content { background: var(--bg); border: 2px solid var(--accent); border-radius: 40px; padding: 60px; text-align: center; max-width: 500px; width: 90%; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; box-shadow: 0 20px 80px rgba(0,229,255,0.2); }
+        .modal-title { font-size: 3rem; font-weight: 900; color: var(--text-main); line-height: 1.1; margin-bottom: 10px; animation: textPulse 2s infinite alternate; }
+
+        /* ANIMATIONS */
+        @keyframes deepOceanFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 10% { opacity: var(--o); } 80% { opacity: var(--o); } 100% { transform: translateY(-120vh) translateX(var(--tx)) scale(1.6); opacity: 0; } }
+        @keyframes slideDownFade { 0% { opacity: 0; transform: translateY(-40px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(40px); } 100% { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInLeft { 0% { transform: translateX(-100%); } 100% { transform: translateX(0); } }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8) translateY(30px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+        @keyframes waveSlosh { 0% { transform: translateX(0) scaleY(1); } 50% { transform: translateX(-15%) scaleY(1.1); } 100% { transform: translateX(-30%) scaleY(1); } }
+        @keyframes spinSlow { 100% { transform: rotate(360deg); } }
+        @keyframes textPulse { 0% { filter: brightness(1); } 100% { filter: brightness(1.2); text-shadow: 0 0 25px var(--accent-glow); } }
+        @keyframes breatheDanger { 0% { box-shadow: 0 10px 30px rgba(255,23,68,0.2); } 100% { box-shadow: 0 15px 45px rgba(255,23,68,0.5); border-color: rgba(255,23,68,0.9); } }
+        @keyframes laserStripe { from { background-position: 2.4rem 0; } to { background-position: 0 0; } }
+        @keyframes sonarPing { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+        @keyframes scanLine { 0% { transform: translateY(-100%) rotate(45deg); } 100% { transform: translateY(100%) rotate(45deg); } }
+        @keyframes swimTank { 0% { transform: translateX(-20px) translateY(8px); } 100% { transform: translateX(20px) translateY(-8px); } }
+        @keyframes floatSubtle { 0% { transform: translateY(-10px); } 100% { transform: translateY(10px); } }
+        @keyframes pulseOpacity { 0%, 100% { opacity: 1; box-shadow: 0 0 20px var(--accent-glow); } 50% { opacity: 0.6; box-shadow: 0 0 5px var(--accent-glow); } }
+        
+        /* Staggered entry */
+        @keyframes staggerPopIn { 0% { opacity: 0; transform: translateY(40px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+
+        .spin { animation: spinSlow 0.5s linear infinite; color: var(--accent); }
+
+        /* ==========================================
+         * MOBILE VIEW (FULLY UNLOCKED & RESPONSIVE)
+         * ========================================== */
+        @media (max-width: 1100px), (max-height: 800px) {
+            body { 
+                overflow-y: auto !important; height: auto; min-height: 100vh; 
+                overscroll-behavior: auto; padding: 0; scroll-behavior: smooth; 
+            }
+            #app { 
+                height: auto; min-height: 100vh; overflow: visible !important; 
+                padding: 10px; gap: 15px; 
+            }
+            .content-area { 
+                overflow: visible !important; height: auto; flex: none; gap: 15px; 
+            }
+            
+            .dash-grid, .calib-grid, .diag-grid { 
+                display: flex; flex-direction: column; flex: none; height: auto; min-height: 0; gap: 15px; 
+            }
+            
+            /* Logic Core explicitly overrides span */
+            .dash-grid > .card[style*="grid-column: 1 / 3"] { grid-column: 1 / -1 !important; }
+            
+            /* ---- LOGIC CORE MOBILE REVISION ---- */
+            .logic-core-grid { 
+                grid-template-columns: 1fr; /* Stack vertically */
+                gap: 20px; 
+            }
+            
+            /* Add individual module boxes for better touch targets and visual separation */
+            .logic-core-grid > div {
+                background: var(--overlay-bg);
+                padding: 22px;
+                border-radius: 20px;
+                border: 1px solid var(--overlay-border);
+            }
+            
+            .logic-core-grid .control-group { 
+                background: transparent; 
+                padding: 0; 
+                border: none; 
+                gap: 15px; 
+                margin-top: 15px;
+            }
+            
+            /* Oversize the buttons for mobile thumbs */
+            .logic-core-grid .btn-toggle { 
+                padding: 18px; 
+                border-radius: 16px; 
+                font-size: 1.15rem; 
+                border: 1px solid var(--surface-border); 
+                background: var(--surface); 
+            }
+            
+            .logic-core-grid .btn-toggle.active { 
+                border-color: var(--glass-highlight); 
+            }
+            /* ------------------------------------ */
+            
+            .card { flex: none; min-height: min-content; overflow: visible !important; padding: 20px 15px; margin: 0; }
+            
+            /* Team Grid single column with heavy top padding for floating avatars */
+            .dev-grid { 
+                display: grid; grid-template-columns: 1fr; gap: 60px; 
+                padding: 50px 10px 20px; overflow: visible !important; 
+            }
+            
+            /* Header constraints */
+            .header-left { gap: 12px; }
+            .logo { font-size: 22px; }
+            .subtitle { display: none; }
+            
+            .tank-wrapper { min-height: 250px; }
+            
+            /* Curtain responsive constraints */
+            .curtain-title { font-size: 3rem; letter-spacing: 5px; }
+            .curtain-glass { padding: 40px 20px; width: 90%; max-width: 400px; }
+            
+            /* Fix Power Controls for mobile (horizontal layout to vertical) */
+            .power-controls-card { 
+                flex-direction: column !important; text-align: center; justify-content: center; 
+                align-items: center; gap: 20px; padding: 25px 15px !important; 
+            }
+            .power-controls-card > div { width: 100%; justify-content: center; flex-direction: column; }
+            .power-controls-card button { width: 100%; }
+            
+            /* Fix Live Readings Mobile */
+            .live-readings-card { flex-direction: column !important; text-align: center; gap: 20px; }
+            .live-readings-card > div[style*="border-left"] { 
+                border-left: none !important; border-top: 2px dashed var(--surface-border); 
+                padding-top: 20px; width: 100%; flex-direction: column; gap: 20px; 
+            }
+            
+            /* Typography safety constraints */
+            .value { font-size: 2.5rem !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        
+        <div class="curtain" :class="{'hidden': !showCurtain}" @click="openCurtain">
+            <div class="curtain-glass">
+                <div class="curtain-icon-wrapper">
+                    <div class="curtain-ring"></div>
+                    <div class="curtain-icon"><i class="ph-fill ph-fish-simple"></i></div>
+                </div>
+                <div class="curtain-title">FISHMATE</div>
+                <div class="curtain-subtitle">An IoT-Based Smart Aquarium Monitoring System</div>
+                <div class="curtain-prompt">CLICK TO DIVE IN</div>
+            </div>
+            <div v-for="n in 20" :key="'c'+n" class="bubble" :style="getBubbleStyle(n)"></div>
+        </div>
+
+        <div class="bubbles" v-if="!showCurtain">
+            <div v-for="n in 15" :key="n" class="bubble" :style="getBubbleStyle(n)"></div>
+        </div>
+
+        <transition name="drawer-fade">
+            <div v-if="menuOpen" class="drawer-overlay" @click="menuOpen = false">
+                <div class="drawer-panel" @click.stop>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--surface-border); padding-bottom: 20px;">
+                        <div style="font-size: 1.6rem; font-weight: 900; color: var(--accent); letter-spacing: 2px;"><i class="ph-bold ph-list"></i> MENU</div>
+                        <button class="btn-icon" @click="menuOpen = false" style="width:48px; height:48px;"><i class="ph-bold ph-x"></i></button>
+                    </div>
+                    <button class="drawer-item" :class="{active: activeTab === 'dashboard'}" @click="switchTab('dashboard')"><i class="ph-fill ph-squares-four"></i> Dashboard</button>
+                    <button class="drawer-item" :class="{active: activeTab === 'team'}" @click="switchTab('team')"><i class="ph-fill ph-users-three"></i> Engineers</button>
+                    <button class="drawer-item" :class="{active: activeTab === 'diagnostics'}" @click="switchTab('diagnostics')"><i class="ph-fill ph-cpu"></i> Diagnostics</button>
+                    <button class="drawer-item" :class="{active: activeTab === 'calibration'}" @click="switchTab('calibration')"><i class="ph-fill ph-sliders"></i> Calibration</button>
+                </div>
+            </div>
+        </transition>
+
+        <transition name="fade">
+            <div v-if="showWelcomeModal" class="modal-overlay" @click="showWelcomeModal = false">
+                <div class="modal-content" @click.stop>
+                    <div style="font-size: 7rem; margin-bottom: 20px; filter: drop-shadow(0 0 30px var(--accent-glow)); animation: swimLogo 2s infinite alternate;">{{ newFishIcon }}</div>
+                    <div class="modal-title">Welcome<br><span style="color: var(--accent);">{{ newFishName }}</span></div>
+                    <div style="font-family: 'Space Mono'; font-weight: bold; color: var(--text-muted);">Successfully Deployed</div>
+                </div>
+            </div>
+        </transition>
+
+        <div class="toast-container">
+            <transition-group name="toast">
+                <div v-for="t in toasts" :key="t.id" :class="['toast', 'toast-' + t.type]">
+                    <i :class="t.type === 'danger' ? 'ph-fill ph-warning-octagon' : 'ph-fill ph-check-circle'" style="font-size: 1.6rem;"></i>
+                    <span>{{ t.msg }}</span>
+                </div>
+            </transition-group>
+        </div>
+
+        <header>
+            <div class="header-left">
+                <button class="btn-icon" @click="menuOpen = true"><i class="ph-bold ph-list"></i></button>
+                <div class="logo">
+                    <div class="dynamic-logo-icon"><i class="ph-fill ph-fish-simple"></i></div>
+                    FISHMATE
+                </div>
+                <div class="subtitle">An IoT-Based Smart Aquarium Monitoring and Control System</div>
+            </div>
+            
+            <button class="btn-icon" @click="toggleTheme()" title="Toggle Visual Theme">
+                <i :class="theme === 'dark' ? 'ph-fill ph-sun' : 'ph-fill ph-moon'"></i>
+            </button>
+        </header>
+
+        <div class="content-area" v-show="activeTab === 'dashboard'">
+            <div class="dash-grid">
+                
+                <div class="card" :class="{'alert-danger': isTempDanger || isTurbDanger, 'alert-warn': isTurbWarn && !isTurbDanger && !isTempDanger}">
+                    <div class="card-header">
+                        <span>Telemetry Scan</span>
+                        <i class="ph-fill ph-radar" :class="(isTempDanger || isTurbDanger) ? 'text-danger' : 'text-safe'"></i>
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-evenly;">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                                <div class="value" :class="isTempDanger ? 'text-danger' : 'text-safe'">{{ sys.temperature.toFixed(1) }}<span>°C</span></div>
+                                <span style="font-size: 1rem; color: var(--text-muted); font-weight: bold; letter-spacing: 2px;">[ {{ sys.effective_profile.temp_min }}-{{ sys.effective_profile.temp_max }} °C ]</span>
+                            </div>
+                            <div class="laser-track"><div class="laser-fill" :style="{ width: tempPercent + '%', background: isTempDanger ? 'var(--danger)' : 'var(--accent)' }"></div></div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                                <div class="value" :class="isTurbDanger ? 'text-danger' : (isTurbWarn ? 'text-warn' : 'text-safe')">{{ sys.turbidity_v.toFixed(2) }}<span>V</span></div>
+                                <span style="font-size: 1rem; color: var(--text-muted); font-weight: bold; letter-spacing: 2px;">[ CLARITY ]</span>
+                            </div>
+                            <div class="laser-track"><div class="laser-fill" :style="{ width: turbPercent + '%', background: isTurbDanger ? 'var(--danger)' : (isTurbWarn ? 'var(--warn)' : 'var(--accent)') }"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" :class="{'alert-danger': isLowWater}">
+                    <div class="card-header"><span>Tank Volume</span><i class="ph-fill ph-waves"></i></div>
+                    <div class="value" :class="isLowWater ? 'text-danger' : 'text-safe'" style="text-align: center; margin: auto 0; font-size: clamp(3rem, 5vw, 5rem);">
+                        {{ isLowWater ? 'CRITICAL' : 'OPTIMAL' }}
+                    </div>
+                    <div class="tank-wrapper" :class="{'tank-danger': isLowWater}">
+                        <div class="water-wave wave-back"></div>
+                        <div class="water-wave wave-mid"></div>
+                        <div class="water-wave wave-front"></div>
+                        <div v-for="(fish, index) in sys.inhabitants" :key="'tank-'+fish.id" class="tank-fish" :style="getTankFishStyle(index, sys.inhabitants.length)">
+                            {{ getFishIcon(fish.type) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="align-items: center; justify-content: center;" :class="{'alert-danger': isLowWater}">
+                    <div class="card-header" style="width: 100%; margin-bottom: 25px;"><span>System Vitality</span><i class="ph-fill ph-heartbeat"></i></div>
+                    <div class="health-core" :class="{'core-danger': isLowWater}" :style="{'--deg': healthScore * 3.6 + 'deg'}">
+                        <div class="health-val" :class="isLowWater ? 'text-danger' : ''">{{ healthScore }}<span style="font-size: 1.5rem; color: var(--accent);">%</span></div>
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: 1 / 3;">
+                    <div class="card-header" style="margin-bottom: 20px;"><span>Logic Core</span><i class="ph-fill ph-cpu"></i></div>
+                    
+                    <div class="logic-core-grid">
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="font-size:1rem; color:var(--text-muted); font-weight:bold; margin-bottom:10px;"><i class="ph-bold ph-magic-wand"></i> Operations Mode</div>
+                            <div class="control-group" style="flex:1;">
+                                <button class="btn-toggle" :class="{active: sys.mode === 'AUTO'}" @click="sendCmd('mode', 'AUTO')">AUTO</button>
+                                <button class="btn-toggle" :class="{active: sys.mode === 'MANUAL'}" @click="sendCmd('mode', 'MANUAL')">MANUAL</button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="font-size:1rem; color:var(--text-muted); font-weight:bold; margin-bottom:10px;"><i class="ph-fill ph-drop" :class="{'spin': sys.pump_status === 'ON'}"></i> Filter Pump</div>
+                            <div class="control-group" style="flex:1;">
+                                <button class="btn-toggle" :class="{active: sys.pump_status === 'ON'}" :disabled="sys.mode === 'AUTO' || isLowWater" @click="sendCmd('pump', 'ON')">ENGAGE</button>
+                                <button class="btn-toggle" :class="{active: sys.pump_status === 'OFF'}" :disabled="sys.mode === 'AUTO' || isLowWater" @click="sendCmd('pump', 'OFF')">HALT</button>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="font-size:1rem; color:var(--text-muted); font-weight:bold; margin-bottom:10px;"><i class="ph-fill ph-fan" :class="{'spin': sys.fan_status === 'ON'}"></i> Cooling Fan</div>
+                            <div class="control-group" style="flex:1;">
+                                <button class="btn-toggle" :class="{active: sys.fan_status === 'ON'}" :disabled="sys.mode === 'AUTO'" @click="sendCmd('fan', 'ON')">ENGAGE</button>
+                                <button class="btn-toggle" :class="{active: sys.fan_status === 'OFF'}" :disabled="sys.mode === 'AUTO'" @click="sendCmd('fan', 'OFF')">HALT</button>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column;">
+                            <div style="font-size:1rem; color:var(--text-muted); font-weight:bold; margin-bottom:10px;"><i class="ph-fill ph-speaker-high"></i> Acoustic Alarm</div>
+                            <div class="control-group" style="flex:1;">
+                                <button class="btn-toggle" :class="{active: !sys.muted}" @click="sendCmd('mute', 'FALSE')">ARMED</button>
+                                <button class="btn-toggle" :class="{active: sys.muted}" @click="sendCmd('mute', 'TRUE')">MUTED</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span>Inhabitants</span>
+                        <button class="btn-icon" style="width:36px; height:36px; font-size:1.1rem; border-radius:10px;" @click="editMode = !editMode">
+                            <i :class="editMode ? 'ph-bold ph-x' : 'ph-bold ph-plus'"></i>
+                        </button>
+                    </div>
+                    <div v-if="!editMode" style="flex: 1 1 auto; overflow-y: auto; display: flex; flex-direction: column; padding-right: 5px;">
+                        <div v-for="fish in sys.inhabitants" :key="fish.id" class="fish-row">
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <div class="fish-avatar">{{ getFishIcon(fish.type) }}</div>
+                                <div>
+                                    <div style="font-size: 1.2rem; font-weight: 800; line-height: 1.2;">{{ fish.name }}</div>
+                                    <div style="font-size: 0.85rem; color: var(--accent); font-weight: 700; text-transform: uppercase;">{{ fish.type }}</div>
+                                </div>
+                            </div>
+                            <button class="btn-icon" style="width: 34px; height: 34px; font-size: 1.1rem; border-radius: 8px;" @click="deleteFish(fish.id)"><i class="ph-bold ph-trash text-danger"></i></button>
+                        </div>
+                        <div v-if="sys.inhabitants.length === 0" style="text-align: center; color: var(--text-muted); font-size: 1rem; margin-top: 20px; font-style: italic;">Bio-Chamber Empty</div>
+                    </div>
+                    <div v-else style="flex: 1 1 auto; display: flex; flex-direction: column; justify-content: flex-start; overflow-y: auto; padding-top: 10px;">
+                        <input type="text" class="form-input" v-model="draftName" placeholder="Call Sign...">
+                        <select class="form-input form-select" v-model="draftType">
+                            <option value="TROPICAL">Tropical 🐠</option>
+                            <option value="BETTA">Betta 🐟</option>
+                            <option value="GOLDFISH">Goldfish 🐡</option>
+                        </select>
+                        <button class="btn-toggle active" style="padding: 14px; border-radius: 12px; margin-top: 10px;" @click="addFish">DEPLOY</button>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="ticker" :class="tickerClass">
+                <div class="sonar-icon"></div>
+                <span style="z-index: 2; letter-spacing: 2px; font-size: 1.3rem;">⯈ {{ sys.status_msg }}</span>
+            </div>
+        </div>
+        
+        <div class="content-area" v-show="activeTab === 'team'">
+            <div class="dev-header">System Architects</div>
+            <div class="dev-grid">
+                <div v-for="dev in teamMembers" :key="dev.id" class="dev-card" :style="{ animationDelay: (dev.id * 0.1) + 's' }">
+                    <div class="dev-img-container">
+                        <img :src="dev.img" class="dev-img" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 100\\'><circle cx=\\'50\\' cy=\\'50\\' r=\\'50\\' fill=\\'%23001f3f\\'/></svg>'">
+                    </div>
+                    <div class="dev-info">
+                        <div class="dev-name">{{ dev.name }}</div>
+                        <div class="dev-role">{{ dev.role }}</div>
+                        <div class="dev-desc">{{ dev.desc }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area" v-show="activeTab === 'diagnostics'">
+            <div class="dev-header">Hardware Diagnostics</div>
+            
+            <div class="diag-grid">
+                <div class="card">
+                    <div class="card-header"><span>System Memory</span><i class="ph-fill ph-hard-drives"></i></div>
+                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-evenly;">
+                        <div class="diag-row">
+                            <div class="diag-label"><i class="ph-bold ph-memory"></i> Free RAM</div>
+                            <div class="diag-val">{{ (sys.sys_ram_free / 1024).toFixed(1) }} KB</div>
+                        </div>
+                        <div class="diag-row">
+                            <div class="diag-label"><i class="ph-bold ph-chart-pie-slice"></i> Allocated RAM</div>
+                            <div class="diag-val">{{ (sys.sys_ram_alloc / 1024).toFixed(1) }} KB</div>
+                        </div>
+                        <div class="diag-row">
+                            <div class="diag-label"><i class="ph-bold ph-timer"></i> System Uptime</div>
+                            <div class="diag-val">{{ formatUptime(sys.sys_uptime) }}</div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span style="font-size: 1rem; font-weight: 800;">RAM USAGE</span>
+                                <span style="font-size: 1.1rem; font-weight: 900; color: var(--accent);">{{ ramPercent }}%</span>
+                            </div>
+                            <div class="laser-track"><div class="laser-fill" :style="{ width: ramPercent + '%', background: ramPercent > 85 ? 'var(--danger)' : 'var(--accent)' }"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><span>Peripherals & Relays</span><i class="ph-fill ph-plug"></i></div>
+                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-evenly;">
+                        <div class="diag-row">
+                            <div class="diag-label"><i class="ph-bold ph-thermometer"></i> DS18B20 Temp Sensor</div>
+                            <div class="diag-val" :class="sys.water_level === 'SENSOR FAULT' ? 'text-danger' : 'text-safe'">{{ sys.water_level === 'SENSOR FAULT' ? 'FAULT' : 'ONLINE' }}</div>
+                        </div>
+                        <div class="diag-row">
+                            <div class="diag-label"><i class="ph-bold ph-waves"></i> Analog Turbidity Sensor</div>
+                            <div class="diag-val text-safe">ONLINE</div>
+                        </div>
+                        <div class="diag-row">
+                            <div class="diag-label"><i class="ph-bold ph-arrows-down-up"></i> Float Switch Trigger</div>
+                            <div class="diag-val" :class="isLowWater ? 'text-danger' : 'text-safe'">{{ isLowWater ? 'LOW WATER (TRIP)' : 'NOMINAL' }}</div>
+                        </div>
+                        <div class="diag-row">
+                            <div class="diag-label"><i class="ph-bold ph-drop"></i> Filter Pump Relay</div>
+                            <div class="diag-val" :class="sys.pump_status === 'ON' ? 'text-accent' : 'text-muted'">{{ sys.pump_status }}</div>
+                        </div>
+                        <div class="diag-row" style="border: none; padding-bottom: 0; margin-bottom: 0;">
+                            <div class="diag-label"><i class="ph-bold ph-fan"></i> Cooling Fan Relay</div>
+                            <div class="diag-val" :class="sys.fan_status === 'ON' ? 'text-accent' : 'text-muted'">{{ sys.fan_status }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card power-controls-card" style="flex: 0 0 auto; flex-direction: row; align-items: center; justify-content: space-between; background: rgba(255, 23, 68, 0.05); border-color: rgba(255, 23, 68, 0.4); padding: 25px 40px; flex-wrap: wrap; gap: 20px;">
+                <div style="font-size: 1.6rem; font-weight: 900; color: var(--danger); display: flex; align-items: center; gap: 15px; letter-spacing: 3px;">
+                    <i class="ph-fill ph-warning-octagon" style="font-size: 2.6rem;"></i> SYSTEM POWER CONTROLS
+                </div>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <button class="btn-toggle active" style="background: linear-gradient(135deg, #ff8f00, #ff6f00); color: #fff; border: none; padding: 16px 30px; font-size: 1.2rem;" @click="systemCommand('restart')"><i class="ph-bold ph-arrows-clockwise"></i> REBOOT FIRMWARE</button>
+                    <button class="btn-toggle active" style="background: linear-gradient(135deg, #d50000, #b71c1c); color: #fff; border: none; padding: 16px 30px; font-size: 1.2rem;" @click="systemCommand('exit')"><i class="ph-bold ph-power"></i> SHUTDOWN DAEMON</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area" v-show="activeTab === 'calibration'">
+            <div class="dev-header">Sensor Calibration</div>
+            
+            <div class="calib-grid">
+                <div class="card">
+                    <div class="card-header"><span>Hardware Offsets</span><i class="ph-fill ph-sliders"></i></div>
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        
+                        <label style="color: var(--accent); font-size: 1.1rem; font-weight: bold; margin-bottom: 8px;">Temperature Offset (°C)</label>
+                        <input type="number" step="0.1" class="form-input" v-model.number="draftTempOffset" style="padding: 16px; font-size: 1.2rem;">
+                        
+                        <label style="color: var(--accent); font-size: 1.1rem; font-weight: bold; margin: 20px 0 8px;">Turbidity Offset (V)</label>
+                        <input type="number" step="0.01" class="form-input" v-model.number="draftTurbOffset" style="padding: 16px; font-size: 1.2rem;">
+                        
+                        <div class="calib-btn-wrapper">
+                            <button class="btn-toggle active calib-btn" @click="saveCalibration">
+                                <i class="ph-bold ph-floppy-disk"></i> COMMIT OFFSETS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><span>Species Boundaries</span><i class="ph-fill ph-fish"></i></div>
+                    <div style="flex: 1; display: flex; flex-direction: column;">
+                        
+                        <label style="color: var(--accent); font-size: 1.1rem; font-weight: bold; margin-bottom: 8px;">Target Fish Profile</label>
+                        <select class="form-input form-select" v-model="editProfileType" @change="loadDraftProfile" style="padding: 16px; font-size: 1.2rem; margin-bottom: 25px;">
+                            <option value="TROPICAL">Tropical Class 🐠</option>
+                            <option value="BETTA">Betta Class 🐟</option>
+                            <option value="GOLDFISH">Goldfish Class 🐡</option>
+                        </select>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+                            <div>
+                                <label style="font-size: 0.9rem; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 6px;">Min Temp (°C)</label>
+                                <input type="number" step="0.5" class="form-input" v-model.number="draftProfile.temp_min" style="padding: 16px; font-size: 1.2rem; text-align: center;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.9rem; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 6px;">Max Temp (°C)</label>
+                                <input type="number" step="0.5" class="form-input" v-model.number="draftProfile.temp_max" style="padding: 16px; font-size: 1.2rem; text-align: center;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.9rem; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 6px;">Turb Warn (V)</label>
+                                <input type="number" step="0.1" class="form-input" v-model.number="draftProfile.turb_warn" style="padding: 16px; font-size: 1.2rem; text-align: center;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.9rem; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 6px;">Turb Danger (V)</label>
+                                <input type="number" step="0.1" class="form-input" v-model.number="draftProfile.turb_danger" style="padding: 16px; font-size: 1.2rem; text-align: center;">
+                            </div>
+                        </div>
+
+                        <div class="calib-btn-wrapper">
+                            <button class="btn-toggle active calib-btn" style="background: linear-gradient(135deg, #00c853, #00e676);" @click="saveProfileThresholds">
+                                <i class="ph-bold ph-check-circle"></i> UPDATE THRESHOLDS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card live-readings-card" style="flex: 0 0 auto; flex-direction: row; align-items: center; border: 2px solid var(--accent); padding: 25px 40px; flex-wrap: wrap; gap: 20px;">
+                <div class="card-header" style="margin: 0; min-width: 200px; font-size: 1.2rem;"><span>Live Readings</span><i class="ph-fill ph-eye"></i></div>
+                <div style="display: flex; flex: 1; justify-content: space-around; border-left: 2px dashed var(--surface-border); flex-wrap: wrap; gap: 15px;">
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: bold; margin-bottom: 5px;">Calibrated Temperature</div>
+                        <div class="value" style="font-size: 2.5rem;">{{ sys.temperature.toFixed(2) }}<span>°C</span></div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 1.1rem; color: var(--text-muted); font-weight: bold; margin-bottom: 5px;">Calibrated Turbidity</div>
+                        <div class="value" style="font-size: 2.5rem;">{{ sys.turbidity_v.toFixed(3) }}<span>V</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted, watch } = Vue;
+        const FISH_ICONS = { "TROPICAL": "🐠", "BETTA": "🐟", "GOLDFISH": "🐡" };
+        
+        // --- Global Firebase Configuration ---
+        const FIREBASE_URL = "https://fishmate-4d6df-default-rtdb.asia-southeast1.firebasedatabase.app/system_data.json";
+        
+        createApp({
+            setup() {
+                const theme = ref(localStorage.getItem('theme') || 'dark');
+                document.documentElement.setAttribute('data-theme', theme.value);
+                const activeTab = ref('dashboard'); const menuOpen = ref(false);
+                const showCurtain = ref(true);
+                
+                const teamMembers = ref([]);
+
+                const sys = ref({ 
+                    temperature: 0.0, turbidity_v: 0.0, water_level: '...', pump_status: 'OFF', fan_status: 'OFF',
+                    mode: 'AUTO', muted: false, status_msg: 'Establishing uplink...', alarm_mode: 'NONE',
+                    temp_offset: 0.0, turb_offset: 0.0, profiles: {},
+                    inhabitants: [], effective_profile: {temp_min: 22, temp_max: 28, turb_warn: 1.8, turb_danger: 1.5},
+                    sys_ram_free: 0, sys_ram_alloc: 0, sys_uptime: 0
+                });
+                
+                const editMode = ref(false); const draftName = ref(''); const draftType = ref('TROPICAL');
+                const showWelcomeModal = ref(false); const newFishName = ref(''); const newFishIcon = ref('');
+                
+                const dataLoaded = ref(false);
+                const draftTempOffset = ref(0.0);
+                const draftTurbOffset = ref(0.0);
+
+                const editProfileType = ref('TROPICAL');
+                const draftProfile = ref({ temp_min: 22.0, temp_max: 28.0, turb_warn: 1.8, turb_danger: 1.5 });
+
+                const getFishIcon = (type) => FISH_ICONS[type] || "🐟";
+                
+                const openCurtain = () => { showCurtain.value = false; };
+
+                const loadDraftProfile = () => {
+                    if (sys.value.profiles && sys.value.profiles[editProfileType.value]) {
+                        draftProfile.value = { ...sys.value.profiles[editProfileType.value] };
+                    }
+                };
+
+                const switchTab = (tab) => {
+                    activeTab.value = tab;
+                    menuOpen.value = false;
+                };
+
+                const addFish = () => {
+                    if (!draftName.value) return;
+                    
+                    const new_id = sys.value.inhabitants.length ? Math.max(...sys.value.inhabitants.map(f => f.id)) + 1 : 1;
+                    const new_inhabitants = [...sys.value.inhabitants, { id: new_id, name: draftName.value, type: draftType.value }];
+                    
+                    // Push updated inhabitants list to Firebase
+                    fetch(FIREBASE_URL, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ inhabitants: new_inhabitants })
+                    });
+                    
+                    newFishName.value = draftName.value; newFishIcon.value = getFishIcon(draftType.value); showWelcomeModal.value = true;
+                    
+                    if ('speechSynthesis' in window) {
+                        const msg = `Welcome FishMate ${draftName.value}! Initiating optimal aquatic conditions.`;
+                        const utterance = new SpeechSynthesisUtterance(msg); 
+                        utterance.rate = 1.0; utterance.pitch = 1.2; utterance.volume = 1.0;
+                        const voices = window.speechSynthesis.getVoices();
+                        const funVoice = voices.find(v => v.name.includes('Samantha') || v.name.includes('Female'));
+                        if (funVoice) utterance.voice = funVoice; 
+                        window.speechSynthesis.speak(utterance);
+                    }
+                    
+                    setTimeout(() => { showWelcomeModal.value = false; }, 3500);
+                    editMode.value = false; draftName.value = '';
+                };
+                
+                const deleteFish = (id) => { 
+                    const filtered = sys.value.inhabitants.filter(f => f.id !== id);
+                    fetch(FIREBASE_URL, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ inhabitants: filtered })
+                    });
+                };
+                
+                const toasts = ref([]); let toastId = 0;
+                const addToast = (msg, type) => { const id = toastId++; toasts.value.push({ id, msg, type }); setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id); }, 5000); };
+
+                const isTempDanger = computed(() => sys.value.temperature > sys.value.effective_profile.temp_max || sys.value.temperature < sys.value.effective_profile.temp_min);
+                const isLowWater = computed(() => sys.value.water_level === 'LOW WATER!');
+                const isTurbDanger = computed(() => sys.value.turbidity_v < sys.value.effective_profile.turb_danger && sys.value.turbidity_v > 0);
+                const isTurbWarn = computed(() => sys.value.turbidity_v < sys.value.effective_profile.turb_warn && !isTurbDanger.value && sys.value.turbidity_v > 0);
+                
+                watch(isLowWater, (newVal) => { if(newVal) addToast("CRITICAL: Low Water Detected!", "danger"); });
+                watch(isTempDanger, (newVal) => { if(newVal) addToast(`WARNING: Temperature outside safe zone!`, "danger"); });
+                watch(isTurbDanger, (newVal) => { if(newVal) addToast("WARNING: High Water Turbidity!", "danger"); });
+                
+                const tempPercent = computed(() => {
+                    let min_bound = sys.value.effective_profile.temp_min - 5; let max_bound = sys.value.effective_profile.temp_max + 5; let range = max_bound - min_bound;
+                    if (range <= 0) return 50; 
+                    let p = ((sys.value.temperature - min_bound) / range) * 100; return Math.min(Math.max(p, 0), 100);
+                });
+                const turbPercent = computed(() => Math.min(Math.max((sys.value.turbidity_v / 4.5) * 100, 0), 100));
+                
+                const ramPercent = computed(() => {
+                    const total = sys.value.sys_ram_free + sys.value.sys_ram_alloc;
+                    if(total === 0) return 0;
+                    return ((sys.value.sys_ram_alloc / total) * 100).toFixed(1);
+                });
+
+                const formatUptime = (seconds) => {
+                    const h = Math.floor(seconds / 3600);
+                    const m = Math.floor((seconds % 3600) / 60);
+                    const s = Math.floor(seconds % 60);
+                    return `${h}h ${m}m ${s}s`;
+                };
+
+                const tickerClass = computed(() => {
+                    if (isLowWater.value || isTempDanger.value || isTurbDanger.value || sys.value.status_msg.includes("FAILSAFE")) return 'ticker-danger';
+                    if (isTurbWarn.value) return 'ticker-warn'; return '';
+                });
+                
+                const healthScore = computed(() => {
+                    if (isLowWater.value || sys.value.status_msg.includes("FAILSAFE")) return 15;
+                    let score = 100; if (isTempDanger.value) score -= 30; if (isTurbDanger.value) score -= 40; else if (isTurbWarn.value) score -= 15;
+                    return Math.max(score, 0);
+                });
+                
+                const bubbleCount = 15;
+                const getBubbleStyle = (n) => {
+                    const size = Math.random() * 25 + 5; 
+                    const baseLeft = ((n - 1) / bubbleCount) * 100; 
+                    const jitter = Math.random() * 4 - 2; 
+                    return { 
+                        '--x': `calc(${baseLeft}% + ${jitter}vw)`, '--s': size + 'px', 
+                        '--d': (Math.random() * 12 + 8) + 's', '--w': (Math.random() * 4 + 2) + 's', 
+                        '--wx': (Math.random() * 30 - 15) + 'px', '--tx': (Math.random() * 60 - 30) + 'px', 
+                        '--o': (Math.random() * 0.4 + 0.1), 'animationDelay': -(Math.random() * 15) + 's' 
+                    }
+                };
+
+                const getTankFishStyle = (index, total) => {
+                    const spread = 80 / (total || 1); const leftPos = 10 + (index * spread) + (Math.random() * 10 - 5); const topPos = 20 + (Math.random() * 40); const dur = 3 + Math.random() * 4; const delay = Math.random() * -5;
+                    return { '--left': `${leftPos}%`, '--top': `${topPos}%`, '--dur': `${dur}s`, 'animationDelay': `${delay}s`, 'transform': index % 2 === 0 ? 'scaleX(-1)' : 'scaleX(1)' };
+                };
+                
+                const toggleTheme = () => { theme.value = theme.value === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme.value); localStorage.setItem('theme', theme.value); };
+                
+                // --- FIREBASE COMMAND SENDER ---
+                const sendCmd = (key, val) => { 
+                    let payload = {};
+                    if(key === 'mode') payload["mode"] = val; 
+                    if(key === 'mute') payload["muted"] = (val === 'TRUE'); 
+                    if(key === 'pump') payload["pump_status"] = val; 
+                    if(key === 'fan') payload["fan_status"] = val; 
+
+                    fetch(FIREBASE_URL, {
+                        method: 'PATCH',
+                        body: JSON.stringify(payload)
+                    });
+                };
+                
+                const saveCalibration = () => {
+                    fetch(FIREBASE_URL, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ temp_offset: draftTempOffset.value, turb_offset: draftTurbOffset.value })
+                    });
+                    addToast("Hardware offsets saved to Cloud.", "safe");
+                };
+
+                const saveProfileThresholds = () => {
+                    const p = draftProfile.value;
+                    const url = `https://fishmate-4d6df-default-rtdb.firebaseio.com/system_data/profiles/${editProfileType.value}.json`;
+                    fetch(url, {
+                        method: 'PATCH',
+                        body: JSON.stringify({ temp_min: p.temp_min, temp_max: p.temp_max, turb_warn: p.turb_warn, turb_danger: p.turb_danger })
+                    });
+                    addToast(`Updated ${editProfileType.value} profile globally.`, "safe");
+                };
+
+                const systemCommand = (cmd) => {
+                    if(confirm(`WARNING: Initiate ${cmd}?`)) {
+                        addToast(`Firmware ${cmd} command logged...`, "warn");
+                    }
+                };
+
+                // --- FIREBASE POLLING ENGINE ---
+                const pollData = () => { 
+                    fetch(FIREBASE_URL)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data) {
+                                sys.value = data;
+                                if (!dataLoaded.value && data.temp_offset !== undefined) {
+                                    draftTempOffset.value = data.temp_offset || 0;
+                                    draftTurbOffset.value = data.turb_offset || 0;
+                                    loadDraftProfile();
+                                    dataLoaded.value = true;
+                                }
+                            }
+                        })
+                        .catch(e => console.log("Cloud Pull Error:", e)); 
+                };
+                
+                // Pull team JSON locally
+                const fetchTeam = () => { fetch('team.json').then(res => res.json()).then(data => teamMembers.value = data).catch(e => {}); };
+
+                onMounted(() => { fetchTeam(); pollData(); setInterval(pollData, 1500); });
+                
+                return { 
+                    theme, sys, toasts, isTempDanger, isLowWater, isTurbDanger, isTurbWarn, 
+                    tempPercent, turbPercent, tickerClass, healthScore, getBubbleStyle, toggleTheme, 
+                    sendCmd, editMode, draftName, draftType, addFish, deleteFish, getFishIcon, 
+                    getTankFishStyle, showWelcomeModal, newFishName, newFishIcon, activeTab, switchTab, teamMembers, 
+                    menuOpen, showCurtain, openCurtain, ramPercent, formatUptime, draftTempOffset, draftTurbOffset, saveCalibration, 
+                    systemCommand, editProfileType, draftProfile, loadDraftProfile, saveProfileThresholds
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

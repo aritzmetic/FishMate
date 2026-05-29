@@ -1,0 +1,12 @@
+[
+    { "id": 1, "name": "Aritz B. Delera", "role": "Project Lead & Embedded Systems", "desc": "Oversees system architecture, orchestrates MicroPython firmware logic, and manages full-stack hardware-software integration.", "img": "https://drive.google.com/thumbnail?id=1QozLysX0ycoGG1f2HCcx09a3pNp56tCf&sz=w300-h300" },
+    { "id": 2, "name": "Joshua A. Basilan", "role": "Hardware Integration Engineer", "desc": "Focuses on sensor wiring topologies, physical assembly, and robust power distribution networking.", "img": "https://drive.google.com/thumbnail?id=1wX1-j4Ka3KUVNMfDkSaIJpc5kwHcq_4D&sz=w300-h300" },
+    { "id": 3, "name": "Derick Carlo S. Herrera", "role": "Hardware Diagnostics Specialist", "desc": "Handles rigorous component testing, circuitry validation, and physical prototyping phases.", "img": "https://drive.google.com/thumbnail?id=1SU4VwaAW7MZiQKKfNmy3ruZJ8kaR6MD0&sz=w300-h300" },
+    { "id": 4, "name": "Aaron Dave L. Lim", "role": "Firmware Developer & Hardware", "desc": "Develops microcontroller scripts, optimizes GPIO telemetry handling, and assists in physical deployment.", "img": "https://drive.google.com/thumbnail?id=1ktRAzuE1ifFtU_bR9CppycRvNrFcORi0&sz=w300-h300" },
+    { "id": 5, "name": "Kate Eurisse L. Martinez", "role": "Software Engineer & Technical Writer", "desc": "Develops UI/UX components, handles frontend reactive logic, and maintains comprehensive system documentation.", "img": "https://drive.google.com/thumbnail?id=1MSced9yhM5qs1Iw7SS7Ta-kUAPOA9mbE&sz=w300-h300" },
+    { "id": 6, "name": "Andrea D. Ragaas", "role": "Systems Analyst & UI Developer", "desc": "Designs user interfaces, manages software testing cycles, and authors structured project manuals.", "img": "https://drive.google.com/thumbnail?id=1VF0G2gkbrsBEt2x7-4g_PrpqR5klBs35&sz=w300-h300" },
+    { "id": 7, "name": "Ma. Angeline T. Tipa", "role": "Data Systems & QA Specialist", "desc": "Ensures data transmission integrity, performs quality assurance on the web app, and structures technical reports.", "img": "https://drive.google.com/thumbnail?id=1v3qwQeKSni10iKl-IfVZNzHG3kophJqU&sz=w300-h300" },
+    { "id": 8, "name": "Chean Bernard V. Vergel", "role": "Hardware Operations Engineer", "desc": "Manages mechanical components, actuator setups (pumps/fans), and the overall system physical layout.", "img": "https://drive.google.com/thumbnail?id=1O_4BQUjwK3H1D9klR9ZsDJHeyjLLaKPF&sz=w300-h300" }
+]
+
+
