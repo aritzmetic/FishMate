@@ -808,7 +808,7 @@
         const { createApp, ref, computed, onMounted, watch } = Vue;
         const FISH_ICONS = { "TROPICAL": "🐠", "BETTA": "🐟", "GOLDFISH": "🐡" };
         
-        // --- Update this URL to match your exact Firebase realtime database ---
+        // --- DIRECT FIREBASE LINK ---
         const FIREBASE_URL = "https://fishmate-4d6df-default-rtdb.asia-southeast1.firebasedatabase.app/system_data.json";
         
         createApp({
@@ -838,6 +838,8 @@
                 const editProfileType = ref('TROPICAL');
                 const draftProfile = ref({ temp_min: 22.0, temp_max: 28.0, turb_warn: 1.8, turb_danger: 1.5 });
 
+                let isSendingCmd = false; // Prevents UI lag/jitter
+
                 const getFishIcon = (type) => FISH_ICONS[type] || "🐟";
                 
                 const openCurtain = () => { showCurtain.value = false; };
@@ -859,10 +861,8 @@
                     const new_id = sys.value.inhabitants && sys.value.inhabitants.length ? Math.max(...sys.value.inhabitants.map(f => f.id)) + 1 : 1;
                     const new_inhabitants = [...(sys.value.inhabitants || []), { id: new_id, name: draftName.value, type: draftType.value }];
                     
-                    // Optimistic update for UI
                     sys.value.inhabitants = new_inhabitants;
                     
-                    // Write to Firebase
                     fetch(FIREBASE_URL, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
@@ -958,7 +958,7 @@
                 
                 const toggleTheme = () => { theme.value = theme.value === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', theme.value); localStorage.setItem('theme', theme.value); };
                 
-                // Directly PATCH values to Firebase instead of calling missing local /api/cmd endpoint
+                // --- FIXED COMMAND FUNCTION (Direct to Firebase + Anti-Jitter) ---
                 const sendCmd = (key, val) => { 
                     let payload = {};
                     if(key === 'mode') { sys.value.mode = val; payload.mode = val; }
@@ -966,11 +966,17 @@
                     if(key === 'pump') { sys.value.pump_status = val; payload.pump_status = val; }
                     if(key === 'fan') { sys.value.fan_status = val; payload.fan_status = val; }
                     
+                    isSendingCmd = true; // Block UI resets temporarily
                     fetch(FIREBASE_URL, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
-                    }).catch(e => console.error("Command Error:", e));
+                    }).then(() => {
+                        setTimeout(() => { isSendingCmd = false; }, 2000);
+                    }).catch(e => {
+                        console.error(e);
+                        isSendingCmd = false;
+                    });
                 };
                 
                 const saveCalibration = () => {
@@ -1004,11 +1010,17 @@
                     }
                 };
 
-                // Poll Firebase instead of missing local /api/data endpoint
                 const pollData = () => { 
                     fetch(FIREBASE_URL).then(res => res.json()).then(data => {
                         if (data) {
-                            // Merge incoming data so optimistic UI toggles aren't instantly reversed by old packets
+                            if (isSendingCmd) {
+                                // If the user just clicked a button, ignore these keys from the cloud 
+                                // to stop the UI from jumping back and forth briefly.
+                                delete data.mode;
+                                delete data.pump_status;
+                                delete data.fan_status;
+                                delete data.muted;
+                            }
                             sys.value = { ...sys.value, ...data };
                             
                             if (!dataLoaded.value && data.temp_offset !== undefined) {
@@ -1021,7 +1033,6 @@
                     }).catch(e => console.log(e)); 
                 };
                 
-                // Keep team pull local assuming team.json sits next to index.html on Vercel
                 const fetchTeam = () => { fetch('team.json').then(res => res.json()).then(data => teamMembers.value = data).catch(e => {}); };
 
                 onMounted(() => { fetchTeam(); pollData(); setInterval(pollData, 1500); });
